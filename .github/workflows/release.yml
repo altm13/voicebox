@@ -55,7 +55,9 @@ jobs:
           workspaces: "./tauri/src-tauri -> target"
 
       - name: Install frontend dependencies
-        run: bun install
+        run: |
+          bun install
+          npm install --no-save @tauri-apps/cli-win32-arm64-msvc@2.9.6
 
       - name: Build Tauri Windows ARM64 Installer
         working-directory: tauri
