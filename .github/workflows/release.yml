@@ -61,15 +61,23 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-          bun install
-          $rollupDir = Get-ChildItem -Path "node_modules\.bun" -Filter "rollup@*" -Directory | Select-Object -First 1
-          if ($rollupDir) {
-            npm pack @rollup/rollup-win32-arm64-msvc@4.56.0 --pack-destination $env:TEMP
-            $tgz = Get-ChildItem -Path $env:TEMP -Filter "rollup-rollup-win32-arm64-msvc-*.tgz" | Select-Object -First 1
-            $dest = Join-Path $rollupDir.FullName "node_modules\@rollup\rollup-win32-arm64-msvc"
-            New-Item -ItemType Directory -Force -Path $dest | Out-Null
-            tar -xzf $tgz.FullName -C $dest --strip-components=1
-          }
+                bun install
+                $pkgs = @(
+                  @{ bun = "rollup@*"; npm = "@rollup/rollup-win32-arm64-msvc@4.56.0"; dest = "@rollup\rollup-win32-arm64-msvc" },
+                  @{ bun = "lightningcss@*"; npm = "lightningcss-win32-arm64-msvc@1.30.2"; dest = "lightningcss-win32-arm64-msvc" },
+                  @{ bun = "@tailwindcss+oxide@*"; npm = "@tailwindcss/oxide-win32-arm64-msvc@4.1.18"; dest = "@tailwindcss\oxide-win32-arm64-msvc" }
+                )
+                foreach ($p in $pkgs) {
+                  $dir = Get-ChildItem -Path "node_modules\.bun" -Filter $p.bun -Directory | Select-Object -First 1
+                  if ($dir) {
+                    npm pack $p.npm --pack-destination $env:TEMP
+                    $tgz = Get-ChildItem -Path $env:TEMP -Filter "*.tgz" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+                    $target = Join-Path $dir.FullName ("node_modules\" + $p.dest)
+                    New-Item -ItemType Directory -Force -Path $target | Out-Null
+                    tar -xzf $tgz.FullName -C $target --strip-components=1
+                    Remove-Item $tgz.FullName -Force
+                  }
+                }
 
       - name: Build Tauri Windows ARM64 Installer
         working-directory: tauri
