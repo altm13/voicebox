@@ -653,6 +653,25 @@ def build_server(cuda=False, rocm=False):
                     check=True,
                 )
 
+        # Strip --copy-metadata for any package not installed on this platform (e.g. win_arm64)
+        import importlib.metadata
+
+        filtered_args = []
+        skip_next = False
+        for i, arg in enumerate(args):
+            if skip_next:
+                skip_next = False
+                continue
+            if arg == "--copy-metadata" and i + 1 < len(args):
+                pkg_name = args[i + 1]
+                try:
+                    importlib.metadata.distribution(pkg_name)
+                except importlib.metadata.PackageNotFoundError:
+                    logger.warning("Skipping --copy-metadata for uninstalled package: %s", pkg_name)
+                    skip_next = True
+                    continue
+            filtered_args.append(arg)
+        
         # Run PyInstaller
         PyInstaller.__main__.run(args)
     finally:
