@@ -63,6 +63,8 @@ jobs:
         run: |
           Remove-Item -Path bun.lock, bun.lockb -Force -ErrorAction SilentlyContinue
           npm install --legacy-peer-deps
+          npm install --prefix app --legacy-peer-deps
+          npm install --prefix tauri --legacy-peer-deps
 
       - name: Build Tauri Windows ARM64 Installer
         working-directory: tauri
