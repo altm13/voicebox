@@ -673,7 +673,7 @@ def build_server(cuda=False, rocm=False):
             filtered_args.append(arg)
         
         # Run PyInstaller
-        PyInstaller.__main__.run(args)
+        PyInstaller.__main__.run(filtered_args)
     finally:
         # Restore torch if we swapped it out (even on build failure)
         if restore_torch == "cuda":
