@@ -44,6 +44,11 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Setup Node.js (ARM64)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Install Rust stable (ARM64)
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -55,7 +60,9 @@ jobs:
           workspaces: "./tauri/src-tauri -> target"
 
       - name: Install frontend dependencies
-        run: bun install
+        run: |
+          rm -f bun.lock bun.lockb
+          npm install --legacy-peer-deps
 
       - name: Build Tauri Windows ARM64 Installer
         working-directory: tauri
