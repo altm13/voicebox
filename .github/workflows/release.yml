@@ -61,7 +61,7 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-          rm -f bun.lock bun.lockb
+          Remove-Item -Path bun.lock, bun.lockb -Force -ErrorAction SilentlyContinue
           npm install --legacy-peer-deps
 
       - name: Build Tauri Windows ARM64 Installer
