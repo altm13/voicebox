@@ -61,10 +61,15 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-          Remove-Item -Path bun.lock, bun.lockb -Force -ErrorAction SilentlyContinue
-          npm install --legacy-peer-deps
-          npm install --prefix app --legacy-peer-deps
-          npm install --prefix tauri --legacy-peer-deps
+          bun install
+          $rollupDir = Get-ChildItem -Path "node_modules\.bun" -Filter "rollup@*" -Directory | Select-Object -First 1
+          if ($rollupDir) {
+            npm pack @rollup/rollup-win32-arm64-msvc@4.56.0 --pack-destination $env:TEMP
+            $tgz = Get-ChildItem -Path $env:TEMP -Filter "rollup-rollup-win32-arm64-msvc-*.tgz" | Select-Object -First 1
+            $dest = Join-Path $rollupDir.FullName "node_modules\@rollup\rollup-win32-arm64-msvc"
+            New-Item -ItemType Directory -Force -Path $dest | Out-Null
+            tar -xzf $tgz.FullName -C $dest --strip-components=1
+          }
 
       - name: Build Tauri Windows ARM64 Installer
         working-directory: tauri
