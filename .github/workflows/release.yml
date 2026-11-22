@@ -55,16 +55,16 @@ jobs:
           workspaces: "./tauri/src-tauri -> target"
 
       - name: Install frontend dependencies
-        run: |
-          bun install
-          npm install --no-save @tauri-apps/cli-win32-arm64-msvc@2.9.6
+        run: bun install
 
       - name: Build Tauri Windows ARM64 Installer
         working-directory: tauri
         env:
           CARGO_TERM_VERBOSE: "true"
           RUST_BACKTRACE: "1"
-        run: bun run tauri build --target aarch64-pc-windows-msvc
+        run: |
+          cargo install tauri-cli --version "^2.9" --locked
+          cargo tauri build --target aarch64-pc-windows-msvc
 
       - name: Upload Windows ARM64 Installer
         uses: actions/upload-artifact@v4
