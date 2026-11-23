@@ -86,8 +86,9 @@ jobs:
           RUST_BACKTRACE: "1"
         run: |
           cargo install tauri-cli --version "^2.9" --locked
-          cargo tauri build --target aarch64-pc-windows-msvc --config '{\"bundle\":{\"createUpdaterArtifacts\":false}}'
-
+          '{"bundle":{"createUpdaterArtifacts":false}}' | Set-Content -Path no-updater.json -Encoding utf8
+          cargo tauri build --target aarch64-pc-windows-msvc --config no-updater.json
+          
       - name: Upload Windows ARM64 Installer
         uses: actions/upload-artifact@v4
         with:
