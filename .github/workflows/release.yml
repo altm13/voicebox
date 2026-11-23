@@ -20,13 +20,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
-          if ($LASTEXITCODE -ne 0) {
-            pip install --pre torch torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
-          }
+          pip install torch torchaudio
           Get-Content backend/requirements.txt | ForEach-Object {
             $line = $_.Trim()
-            if ($line -and -not $line.StartsWith("#")) {
+            if ($line -and -not $line.StartsWith("#") -and -not ($line -match "^torch(audio|vision)?([<>=!~]|$)")) {
               Write-Host "Installing: $line"
               pip install $line
             }
@@ -35,7 +32,7 @@ jobs:
           pip install --no-deps chatterbox-tts
           pip install --no-deps hume-tada
           pip install --no-deps omnivoice
-          python -c "import torch, fastapi, uvicorn, transformers; print('Core backend packages verified!')"
+          python -c "import torch, fastapi, uvicorn, transformers; print('Core backend packages verified! PyTorch:', torch.__version__)"
 
       - name: Build Python server (Windows ARM64)
         shell: bash
