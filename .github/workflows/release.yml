@@ -20,19 +20,20 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          pip install torch torchaudio
+          pip install torch torchaudio --extra-index-url https://snapshots.linaro.org/ldcg/python-cache/
+          python -c "import torch; print('PyTorch verified:', torch.__version__)"
           Get-Content backend/requirements.txt | ForEach-Object {
             $line = $_.Trim()
             if ($line -and -not $line.StartsWith("#") -and -not ($line -match "^torch(audio|vision)?([<>=!~]|$)")) {
               Write-Host "Installing: $line"
-              pip install $line
+              pip install --only-binary=:all: $line
             }
           }
           pip install --no-deps qwen-tts
           pip install --no-deps chatterbox-tts
           pip install --no-deps hume-tada
           pip install --no-deps omnivoice
-          python -c "import torch, fastapi, uvicorn, transformers; print('Core backend packages verified! PyTorch:', torch.__version__)"
+          python -c "import torch, fastapi, uvicorn, transformers; print('Core backend packages verified!')"
 
       - name: Build Python server (Windows ARM64)
         shell: bash
