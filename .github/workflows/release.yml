@@ -26,21 +26,23 @@ jobs:
             $line = $_.Trim()
             if ($line -and -not $line.StartsWith("#") -and -not ($line -match "^torch(audio|vision)?([<>=!~]|$)")) {
               Write-Host "Installing: $line"
-              pip install --only-binary=:all: $line
+              pip install --prefer-binary $line
             }
           }
           pip install --no-deps qwen-tts
           pip install --no-deps chatterbox-tts
           pip install --no-deps hume-tada
           pip install --no-deps omnivoice
-          python -c "import torch, fastapi, uvicorn, transformers; print('Core backend packages verified!')"
+          python -c "import torch, torchaudio, fastapi, uvicorn, transformers, soundfile, numpy; print('Core backend packages verified!')"
 
       - name: Build Python server (Windows ARM64)
         shell: bash
         run: |
+          set -euo pipefail
           cd backend
           python build_binary.py
           python build_binary.py --shim
+          ls -lh dist/
 
           PLATFORM=$(rustc --print host-tuple)
           mkdir -p ../tauri/src-tauri/binaries
@@ -70,23 +72,23 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-                bun install
-                $pkgs = @(
-                  @{ bun = "rollup@*"; npm = "@rollup/rollup-win32-arm64-msvc@4.56.0"; dest = "@rollup\rollup-win32-arm64-msvc" },
-                  @{ bun = "lightningcss@*"; npm = "lightningcss-win32-arm64-msvc@1.30.2"; dest = "lightningcss-win32-arm64-msvc" },
-                  @{ bun = "@tailwindcss+oxide@*"; npm = "@tailwindcss/oxide-win32-arm64-msvc@4.1.18"; dest = "@tailwindcss\oxide-win32-arm64-msvc" }
-                )
-                foreach ($p in $pkgs) {
-                  $dir = Get-ChildItem -Path "node_modules\.bun" -Filter $p.bun -Directory | Select-Object -First 1
-                  if ($dir) {
-                    npm pack $p.npm --pack-destination $env:TEMP
-                    $tgz = Get-ChildItem -Path $env:TEMP -Filter "*.tgz" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-                    $target = Join-Path $dir.FullName ("node_modules\" + $p.dest)
-                    New-Item -ItemType Directory -Force -Path $target | Out-Null
-                    tar -xzf $tgz.FullName -C $target --strip-components=1
-                    Remove-Item $tgz.FullName -Force
-                  }
-                }
+          bun install
+          $pkgs = @(
+            @{ bun = "rollup@*"; npm = "@rollup/rollup-win32-arm64-msvc@4.56.0"; dest = "@rollup\rollup-win32-arm64-msvc" },
+            @{ bun = "lightningcss@*"; npm = "lightningcss-win32-arm64-msvc@1.30.2"; dest = "lightningcss-win32-arm64-msvc" },
+            @{ bun = "@tailwindcss+oxide@*"; npm = "@tailwindcss/oxide-win32-arm64-msvc@4.1.18"; dest = "@tailwindcss\oxide-win32-arm64-msvc" }
+          )
+          foreach ($p in $pkgs) {
+            $dir = Get-ChildItem -Path "node_modules\.bun" -Filter $p.bun -Directory | Select-Object -First 1
+            if ($dir) {
+              npm pack $p.npm --pack-destination $env:TEMP
+              $tgz = Get-ChildItem -Path $env:TEMP -Filter "*.tgz" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+              $target = Join-Path $dir.FullName ("node_modules\" + $p.dest)
+              New-Item -ItemType Directory -Force -Path $target | Out-Null
+              tar -xzf $tgz.FullName -C $target --strip-components=1
+              Remove-Item $tgz.FullName -Force
+            }
+          }
 
       - name: Build Tauri Windows ARM64 Installer
         working-directory: tauri
@@ -97,7 +99,7 @@ jobs:
           cargo install tauri-cli --version "^2.9" --locked
           '{"bundle":{"createUpdaterArtifacts":false}}' | Set-Content -Path no-updater.json -Encoding utf8
           cargo tauri build --target aarch64-pc-windows-msvc --config no-updater.json
-          
+
       - name: Upload Windows ARM64 Installer
         uses: actions/upload-artifact@v4
         with:
