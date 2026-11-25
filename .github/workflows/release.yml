@@ -18,10 +18,13 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          $ErrorActionPreference = "Stop"
           python -m pip install --upgrade pip
           pip install pyinstaller
-          pip install torch torchaudio --extra-index-url https://snapshots.linaro.org/ldcg/python-cache/
+          pip install --no-cache-dir torch==2.12.0+cpu --index-url https://download.pytorch.org/whl/cpu
           python -c "import torch; print('PyTorch verified:', torch.__version__)"
+
+          $ErrorActionPreference = "Continue"
           Get-Content backend/requirements.txt | ForEach-Object {
             $line = $_.Trim()
             if ($line -and -not $line.StartsWith("#") -and -not ($line -match "^torch(audio|vision)?([<>=!~]|$)")) {
@@ -33,7 +36,9 @@ jobs:
           pip install --no-deps chatterbox-tts
           pip install --no-deps hume-tada
           pip install --no-deps omnivoice
-          python -c "import torch, torchaudio, fastapi, uvicorn, transformers, soundfile, numpy; print('Core backend packages verified!')"
+
+          $ErrorActionPreference = "Stop"
+          python -c "import torch, fastapi, uvicorn, transformers, soundfile, numpy; print('Core backend packages verified!')"
 
       - name: Build Python server (Windows ARM64)
         shell: bash
